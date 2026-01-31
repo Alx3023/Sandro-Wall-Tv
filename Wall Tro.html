@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>SANDRO TV  — TV Wall</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        background: #000;
+        height: 100%;
+        font-family: "Segoe UI", Arial, sans-serif;
+        color: white;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* HEADER */
+    #header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        padding-left: 30px;
+        font-size: 36px;
+        font-weight: bold;
+        z-index: 60;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        background: rgba(0, 20, 60, 0.75);
+        backdrop-filter: blur(8px);
+        border-bottom: 3px solid #ff0033;
+        color: #ffffff;
+        text-shadow: 0 0 12px rgba(255, 0, 50, 0.8);
+    }
+    #header::before {
+        content: "SANDRO TV";
+        font-weight: 900;
+        margin-right: 15px;
+        padding: 6px 14px;
+        background: #ff0033;
+        border-radius: 4px;
+        color: white;
+        text-shadow: none;
+    }
+
+    /* BREAKING BANNER */
+    #breakingBanner {
+        position: fixed;
+        top: 70px;
+        left: 0;
+        width: 100%;
+        height: 55px;
+        background: linear-gradient(90deg, #ff0033, #b00022);
+        display: flex;
+        align-items: center;
+        padding-left: 25px;
+        font-size: 28px;
+        font-weight: 900;
+        color: white;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        text-shadow: 0 0 12px rgba(0,0,0,0.6);
+        border-bottom: 3px solid rgba(255,255,255,0.06);
+        z-index: 55;
+        opacity: 0;
+        transform: translateY(-60px);
+        transition: 0.35s ease;
+        pointer-events: none;
+    }
+    #breakingBanner.show {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+
+    /* CONTROLLI */
+    #controls {
+        position: fixed;
+        top: 15px;
+        right: 20px;
+        z-index: 70;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .btn-icon {
+        width: 42px;
+        height: 42px;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: 0.18s;
+        position: relative;
+        overflow: hidden;
+    }
+    .btn-icon:hover { background: #ff0033; border-color: #ff0033; }
+
+    /* file input covers the icon area and is clickable */
+    #m3uFile {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+        z-index: 5;
+    }
+
+    #controls input[type="number"] {
+        width: 56px;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.12);
+        color: white;
+        padding: 6px;
+        border-radius: 6px;
+        text-align: center;
+        font-size: 16px;
+    }
+
+    /* TICKER - BARRA ULTERIORMENTE RIDOTTA E TESTO PIÙ IN ALTO */
+    #ticker {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 40px; /* RIDOTTO: era 48px */
+        background: linear-gradient(180deg, rgba(0,10,30,0.95), rgba(0,0,0,0.9));
+        border-top: 3px solid #ff0033;
+        overflow: hidden;
+        z-index: 50;
+        display: flex;
+        align-items: flex-start; /* Allineamento in alto */
+        padding-left: 12px; /* Ridotto per barra più stretta */
+        gap: 8px; /* Ridotto per barra più stretta */
+        padding-top: 1px; /* Ridotto per barra più stretta */
+    }
+
+    #tickerLabel {
+        background: #ff0033;
+        padding: 3px 10px; /* Ridotto per barra più stretta */
+        font-weight: 900;
+        border-radius: 3px; /* Ridotto per barra più stretta */
+        text-transform: uppercase;
+        font-size: 14px; /* Ridotto per barra più stretta */
+        white-space: nowrap;
+        box-shadow: 0 2px 6px rgba(255,0,50,0.12); /* Ridotto */
+        height: 26px; /* Ridotto per barra più stretta */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 4px; /* Aumentato per posizionare più in alto */
+    }
+
+    #tickerInner {
+        position: relative;
+        flex: 1 1 auto;
+        height: 100%;
+        overflow: hidden;
+        display: flex;
+        align-items: flex-start; /* Allineamento in alto */
+        justify-content: center;
+        padding-top: 6px; /* Aumentato per alzare ulteriormente il testo */
+    }
+
+    #ticker span {
+        position: absolute;
+        left: 100%;
+        top: 20%; /* ULTERIORMENTE ALZATO: era 40%, ora 30% */
+        transform: translateY(-50%);
+        white-space: nowrap;
+        font-size: 22px; /* Leggermente ridotto per barra più stretta */
+        color: #ffccd5;
+        font-weight: 600;
+        padding-right: 30px;
+        will-change: transform;
+        text-shadow: 0 0 8px rgba(0,0,0,0.8);
+        letter-spacing: 0.5px;
+        text-align: center;
+        width: max-content;
+        line-height: 1.1; /* Ridotto per barra più stretta */
+    }
+
+    /* animation will be applied dynamically via JS for variable width */
+    .glow { animation: glowPulse 2.5s infinite ease-in-out; }
+    @keyframes glowPulse {
+        0% { text-shadow: 0 0 8px rgba(255,0,50,0.35); }
+        50% { text-shadow: 0 0 22px rgba(255,0,50,0.95); }
+        100% { text-shadow: 0 0 8px rgba(255,0,50,0.35); }
+    }
+
+    .fade { opacity: 0; transition: opacity 0.35s; }
+
+    /* TV WALL - AGGIORNATO PER BARRA RIDOTTA */
+    #wall {
+        position: absolute;
+        top: 125px;
+        bottom: 40px; /* AGGIORNATO: era 48px */
+        left: 0;
+        right: 0;
+        overflow-y: auto;
+        display: grid;
+        gap: 6px;
+        padding: 6px;
+        background: radial-gradient(circle at center, #00122e 0%, #000000 80%);
+    }
+
+    video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        background: #000;
+        border: 2px solid rgba(105, 0, 50, 0.18);
+        box-shadow: 0 0 12px rgba(105, 0, 50, 0.12);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: transform 0.3s ease, border-color 0.3s ease;
+    }
+
+    video:hover {
+        border-color: rgba(255, 0, 50, 0.5);
+        transform: scale(1.02);
+    }
+
+    .video-fullscreen {
+        position: fixed !important;
+        top: 70px !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: calc(100vh - 110px) !important; /* AGGIORNATO: era 118px */
+        z-index: 9999 !important;
+        object-fit: contain !important;
+        background: black !important;
+        border: 3px solid #ff0033 !important;
+        box-shadow: 0 0 30px rgba(255, 0, 50, 0.5) !important;
+        border-radius: 0 !important;
+    }
+
+    /* Audio status indicator */
+    .audio-active::after {
+        content: "🔊";
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(0, 0, 0, 0.7);
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        z-index: 10;
+    }
+
+    /* small overlay for local file warning */
+    #localWarning {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        z-index: 80;
+        background: rgba(0,0,0,0.85);
+        color: #fff;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.06);
+        font-size: 13px;
+        display: none;
+        max-width: 360px;
+    }
+
+    /* responsive tweaks */
+    @media (max-width: 720px) {
+        #header { font-size: 22px; height: 60px; }
+        #breakingBanner { font-size: 20px; height: 48px; top: 60px; }
+        #ticker span { 
+            font-size: 19px; /* Leggermente ridotto per mobile */
+            top: 25%; /* Ancora più alzato per mobile */
+        }
+        #ticker { 
+            height: 36px; /* Ridotto per mobile */
+            padding-left: 8px;
+            padding-top: 0;
+        }
+        #tickerLabel { 
+            font-size: 13px; 
+            padding: 2px 8px; 
+            height: 24px; 
+            margin-top: 3px;
+            border-radius: 2px;
+        }
+        #tickerInner { 
+            padding-top: 4px; /* Ridotto per mobile */
+        }
+        #wall { 
+            top: 110px; 
+            bottom: 36px; /* AGGIORNATO per mobile */
+        }
+        .video-fullscreen {
+            top: 60px !important;
+            height: calc(100vh - 96px) !important; /* AGGIORNATO per mobile */
+        }
+    }
+</style>
+</head>
+<body>
+
+<div id="header">IS GOOD</div>
+<div id="breakingBanner">BREAKING NEWS</div>
+
+<div id="controls">
+    <label class="btn-icon" title="Carica file M3U">
+        <input type="file" id="m3uFile" accept=".m3u">
+        <svg viewBox="0 0 24 24" width="20" height="20" style="pointer-events:none;">
+            <path fill="white" d="M4 4h16v2H4zm0 7h16v2H4zm0 7h16v2H4z"/>
+        </svg>
+    </label>
+
+    <div style="display:flex; align-items:center; gap:8px;">
+        <svg viewBox="0 0 24 24" width="22" height="22"><path fill="white" d="M7 10v4h10v-4H7zm-2 6h14v2H5zm0-10h14v2H5z"/></svg>
+        <input type="number" id="cols" value="3" min="1" max="10" title="Numero colonne">
+    </div>
+
+    <button class="btn-icon" id="loadBtn" title="Carica TV Wall">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path fill="white" d="M8 5v14l11-7z"/></svg>
+    </button>
+</div>
+
+<div id="localWarning">Stai aprendo il file direttamente dal disco (file://). Alcune funzioni (fetch di feed) potrebbero essere bloccate. Per piena funzionalità, esegui un server locale (es. `python -m http.server`) e apri la pagina via http://localhost:8000.</div>
+
+<div id="wall" aria-live="polite"></div>
+
+<div id="ticker" role="status" aria-live="polite">
+    <div id="tickerLabel">SANDRO TV</div>
+    <div id="tickerInner"><span id="tickerText">Caricamento notizie…</span></div>
+</div>
+
+<script>
+/* ============================
+   CONFIGURAZIONE FEED
+   - Usa rss2json per maggiore compatibilità CORS
+   - Puoi aggiungere o rimuovere feed dall'array
+============================ */
+const rssFeeds = [
+    "https://www.ansa.it/sito/ansait_rss.xml",
+    "https://feeds.reuters.com/reuters/topNews",
+    "https://tg24.sky.it/rss/tg24_mondo.xml",
+     "https://www.italpress.com/",
+     "https://www.agi.it/",
+];
+
+const colorRules = [
+    { keyword: "BREAKING", color: "#ff0033" },
+    { keyword: "ULTIM'ORA", color: "#ff0033" },
+    { keyword: "URGENTE", color: "#ff6600" },
+    { keyword: "POLITICA", color: "#00aaff" },
+    { keyword: "SPORT", color: "#00ff66" },
+    { keyword: "METEO", color: "#ffff33" }
+];
+
+const tickerTextEl = document.getElementById("tickerText");
+const tickerInner = document.getElementById("tickerInner");
+const tickerLabel = document.getElementById("tickerLabel");
+const breakingBanner = document.getElementById("breakingBanner");
+const localWarning = document.getElementById("localWarning");
+
+/* Mostra avviso se aperto via file:// */
+if (location.protocol === "file:") {
+    localWarning.style.display = "block";
+}
+
+/* ============================
+   GESTIONE AUDIO E FULLSCREEN
+============================ */
+let currentlyActiveVideo = null;
+
+function toggleVideoFullscreen(video) {
+    const isFullscreen = video.classList.contains("video-fullscreen");
+    
+    // Se stiamo per entrare in fullscreen
+    if (!isFullscreen) {
+        // Disattiva audio di tutti gli altri video
+        document.querySelectorAll('video').forEach(v => {
+            if (v !== video) {
+                v.muted = true;
+                v.classList.remove('audio-active');
+            }
+        });
+        
+        // Attiva audio del video selezionato
+        video.muted = false;
+        video.classList.add('audio-active');
+        
+        // Aggiungi la classe fullscreen
+        video.classList.add("video-fullscreen");
+        
+        // Cerca di riprodurre il video con audio attivato
+        video.play().catch(e => {
+            console.warn("Impossibile riprodurre audio:", e);
+            // Se fallisce, riprova con audio muto
+            video.muted = true;
+            video.play();
+        });
+        
+        currentlyActiveVideo = video;
+    } else {
+        // Se stiamo per uscire dal fullscreen
+        video.classList.remove("video-fullscreen");
+        video.classList.remove('audio-active');
+        
+        // Rimetti muto il video quando è in griglia
+        video.muted = true;
+        
+        // Continua la riproduzione ma muto
+        video.play().catch(e => console.warn("Errore riproduzione:", e));
+        
+        currentlyActiveVideo = null;
+    }
+}
+
+/* ============================
+   TV WALL: M3U
+============================ */
+const m3uInput = document.getElementById("m3uFile");
+const loadBtn = document.getElementById("loadBtn");
+const wall = document.getElementById("wall");
+
+function parseM3U(text) {
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    // prendi solo le righe che iniziano con http o rtsp
+    return lines.filter(l => /^https?:\/\//i.test(l) || /^rtsp:\/\//i.test(l));
+}
+
+function loadM3UFromFile(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const text = e.target.result || "";
+        const streams = parseM3U(text);
+        renderWall(streams);
+    };
+    reader.onerror = function() {
+        alert("Errore nella lettura del file M3U.");
+    };
+    reader.readAsText(file);
+}
+
+function renderWall(streams) {
+    const cols = Math.max(1, parseInt(document.getElementById("cols").value || 3, 10));
+    wall.innerHTML = "";
+    wall.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    
+    if (!streams.length) {
+        wall.innerHTML = "<div style='color:#ddd;padding:20px'>Nessun stream valido nel file M3U.</div>";
+        return;
+    }
+    
+    streams.forEach(url => {
+        const container = document.createElement("div");
+        container.style.minHeight = "160px";
+        container.style.position = "relative";
+        
+        const video = document.createElement("video");
+        video.src = url;
+        video.autoplay = true;
+        video.muted = true; // Tutti muti di default in griglia
+        video.controls = false;
+        video.playsInline = true;
+        video.setAttribute("preload", "metadata");
+        
+        // Gestione errori
+        video.addEventListener("error", () => {
+            container.innerHTML = "<div style='color:#f88;padding:12px'>Stream non riproducibile</div>";
+        });
+        
+        // Click per fullscreen e attivazione audio
+        video.addEventListener("click", () => {
+            toggleVideoFullscreen(video);
+        });
+        
+        // Gestione uscita dal fullscreen con ESC
+        video.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && video.classList.contains("video-fullscreen")) {
+                toggleVideoFullscreen(video);
+            }
+        });
+        
+        container.appendChild(video);
+        wall.appendChild(container);
+    });
+}
+
+/* click sul bottone: se è stato già selezionato un file, ricarica; altrimenti apri file dialog */
+loadBtn.addEventListener("click", () => {
+    if (m3uInput.files.length) {
+        loadM3U();
+    } else {
+        // apri dialogo file
+        m3uInput.click();
+    }
+});
+
+/* quando l'utente sceglie un file, caricalo subito */
+m3uInput.addEventListener("change", (e) => {
+    if (e.target.files && e.target.files[0]) {
+        loadM3UFromFile(e.target.files[0]);
+    }
+});
+
+/* funzione chiamata anche dal pulsante (compatibilità) */
+function loadM3U() {
+    if (!m3uInput.files.length) {
+        alert("Seleziona un file M3U prima di premere Carica.");
+        return;
+    }
+    loadM3UFromFile(m3uInput.files[0]);
+}
+
+/* ============================
+   GESTIONE FULLSCREEN CON ESC
+============================ */
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && currentlyActiveVideo) {
+        toggleVideoFullscreen(currentlyActiveVideo);
+    }
+});
+
+/* ============================
+   RSS MULTI-FEED + TICKER
+============================ */
+
+/* usa rss2json per aggirare CORS; attenzione ai limiti pubblici */
+async function fetchFeedViaRss2Json(feedUrl) {
+    const api = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(feedUrl);
+    const res = await fetch(api);
+    if (!res.ok) throw new Error("Feed non raggiungibile");
+    return res.json();
+}
+
+async function loadRSSFeeds() {
+    let allNews = [];
+    for (const url of rssFeeds) {
+        try {
+            const data = await fetchFeedViaRss2Json(url);
+            if (data && Array.isArray(data.items)) {
+                const items = data.items.map(i => ({
+                    title: (i.title || "").replace(/\s+/g, " ").trim(),
+                    date: i.pubDate ? new Date(i.pubDate) : new Date()
+                }));
+                allNews.push(...items);
+            }
+        } catch (err) {
+            console.warn("Feed non raggiungibile:", url, err);
+        }
+    }
+    // rimuovi duplicati per titolo e ordina per data
+    const unique = [];
+    const seen = new Set();
+    allNews.sort((a,b) => b.date - a.date).forEach(n => {
+        const key = n.title;
+        if (!seen.has(key)) { seen.add(key); unique.push(n); }
+    });
+    return unique;
+}
+
+function applyDynamicColor(text) {
+    const upper = (text || "").toUpperCase();
+    for (const rule of colorRules) {
+        if (upper.includes(rule.keyword)) return rule.color;
+    }
+    return "#ffccd5";
+}
+
+function updateBreakingBanner(text) {
+    const upper = (text || "").toUpperCase();
+    const isBreaking = upper.includes("BREAKING") || upper.includes("ULTIM'ORA") || upper.includes("URGENTE");
+    breakingBanner.classList.toggle("show", isBreaking);
+}
+
+function updateTickerLabel(text) {
+    const upper = (text || "").toUpperCase();
+    if (upper.includes("SPORT")) tickerLabel.textContent = "SANDRO TV SPORT";
+    else if (upper.includes("POLITICA")) tickerLabel.textContent = "SANDRO TV POLITICA";
+    else if (upper.includes("METEO")) tickerLabel.textContent = "SANDRO TV METEO";
+    else tickerLabel.textContent = "SANDRO TV";
+}
+
+/* animazione di scorrimento: calcola larghezza e applica transform con durata proporzionale */
+function animateTicker(text) {
+    const span = tickerTextEl;
+    span.style.transition = "none";
+    span.style.transform = "translateX(0)";
+    span.style.left = "100%";
+    span.textContent = text || "Nessuna notizia disponibile — SANDRO TV ";
+    // forza reflow
+    void span.offsetWidth;
+
+    // calcola distanza da percorrere: larghezza del testo + area visibile
+    const textWidth = span.offsetWidth;
+    const containerWidth = tickerInner.offsetWidth;
+    const distance = textWidth + containerWidth + 60; // margine
+    
+    // CENTRATURA: calcola lo spostamento per far sì che il testo parta completamente a destra
+    // e finisca completamente a sinistra, passando per il centro
+    const startPosition = containerWidth; // Posizione iniziale: a destra del container
+    const endPosition = -textWidth; // Posizione finale: completamente a sinistra
+    
+    // durata in secondi (adatta la velocità qui)
+    const pxPerSec = 120; // velocità: 120px/s
+    const duration = Math.max(8, Math.ceil((startPosition - endPosition) / pxPerSec));
+
+    span.style.transition = `transform ${duration}s linear`;
+    // Posiziona all'inizio (a destra, centrato verticalmente)
+    span.style.left = `${startPosition}px`;
+    // Anima fino a sinistra
+    span.style.transform = `translateX(${endPosition}px)`;
+}
+
+/* aggiornamento ticker principale */
+let lastTickerText = "";
+async function updateTicker() {
+    try {
+        const news = await loadRSSFeeds();
+        if (!news.length) {
+            animateTicker("Nessuna notizia disponibile — SANDRO TV ");
+            tickerTextEl.style.color = "#ffccd5";
+            tickerTextEl.classList.remove("glow");
+            updateBreakingBanner("");
+            updateTickerLabel("");
+            return;
+        }
+        // unisci i primi N titoli per non creare stringhe troppo lunghe
+        const top = news.slice(0, 20).map(n => n.title);
+        const text = top.join(" — ");
+        // evita ricaricare se identico
+        if (text !== lastTickerText) {
+            lastTickerText = text;
+            animateTicker(text);
+            const color = applyDynamicColor(text);
+            tickerTextEl.style.color = color;
+            // glow solo se breaking o urgente
+            const upper = text.toUpperCase();
+            if (upper.includes("BREAKING") || upper.includes("ULTIM'ORA") || upper.includes("URGENTE")) {
+                tickerTextEl.classList.add("glow");
+            } else {
+                tickerTextEl.classList.remove("glow");
+            }
+            updateBreakingBanner(text);
+            updateTickerLabel(text);
+        }
+    } catch (err) {
+        console.error("Errore aggiornamento ticker:", err);
+        animateTicker("Errore nel caricamento delle notizie.");
+        tickerTextEl.style.color = "#ffccd5";
+    }
+}
+
+/* avvia subito e poi ogni 60s */
+updateTicker();
+setInterval(updateTicker, 60000);
+
+/* ============================
+   Piccoli miglioramenti UX
+============================ */
+/* se la pagina è servita via file://, alcune fetch potrebbero fallire.
+   L'avviso locale è già mostrato; qui non forziamo altro. */
+
+/* evita che il testo rimanga invisibile se la larghezza è 0 */
+window.addEventListener("resize", () => {
+    // riavvia animazione per adattare larghezza
+    if (lastTickerText) animateTicker(lastTickerText);
+});
+
+/* debug helper: se vuoi forzare un aggiornamento manuale */
+window.forceTickerUpdate = updateTicker;
+</script>
+
+</body>
+</html>
